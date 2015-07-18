@@ -1,0 +1,58 @@
+#!/bin/bash
+if [ ${#} == 2 ]; then
+	x=$1
+	y=$2
+	if [ -e ${x} ]; then
+		z=`cat $x`
+
+		for test in $z
+		do
+			if [ -r $test.args ]; then
+				if [[ -r $test.in && -r $test.out ]]; then
+					new=`cat $test.args`
+					newfile=`mktemp`
+					${y} ${new} < $test.in > $newfile
+					if ! diff $test.out $newfile > /dev/null 2>&1 ; then
+						echo "Test failed: $test"
+						echo "Input:"
+						cat $test.in
+						echo "Expected:"
+						cat $test.out
+						echo "Actual:"
+						cat $newfile
+					fi
+					rm $newfile
+				else
+					echo "One or both of these files are not readable" 1>&2
+					exit 1
+				fi
+			else 
+				if [[ -r $test.in && -r $test.out ]]; then
+                                        newfile=`mktemp`
+                                        $y < $test.in > $newfile
+                                        if ! diff $test.out $newfile > /dev/null 2>&1 ; then
+                                                echo "Test failed: $test"
+                                                echo "Input:"
+                                                cat $test.in
+                                                echo "Expected:"
+                                                cat $test.out
+                                                echo "Actual:"
+                                                cat $newfile
+                                        fi
+                                        rm $newfile
+                                else
+                                        echo "One or both of these files are not readable" 1>&2
+                                        exit 1
+                                fi
+			fi
+		
+		done
+	else
+		echo "The file does not exist" 1>&2
+		exit 2
+	fi
+else 
+	echo "You do not have the right number of arguments" 1>&2
+	exit 1
+fi
+exit 0
